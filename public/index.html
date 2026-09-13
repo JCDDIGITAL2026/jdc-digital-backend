@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JDC Digital / Pilotis — console de test</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: #f4f5f3; color: #1f2a24; font-size: 14px;
+  }
+  header {
+    background: #16332b; color: #fff; padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .badge { background: #ffb703; color: #16332b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 8px; }
+  header .who { font-size: 13px; opacity: 0.9; }
+  button { cursor: pointer; border: none; border-radius: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; }
+  .btn-primary { background: #16332b; color: #fff; }
+  .btn-secondary { background: #e4e7e2; color: #1f2a24; }
+  .btn-danger { background: #b3261e; color: #fff; }
+  .btn-warn { background: #ffb703; color: #16332b; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  input, select, textarea {
+    font-size: 13px; padding: 6px 8px; border: 1px solid #cfd3cc; border-radius: 6px; font-family: inherit; width: 100%;
+  }
+  label { font-size: 12px; color: #555; display: block; margin-bottom: 3px; }
+  .field { margin-bottom: 10px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > .field { flex: 1; min-width: 140px; }
+  main { display: flex; min-height: calc(100vh - 56px); }
+  #login-view { max-width: 380px; margin: 60px auto; background: #fff; padding: 24px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  #login-view h2 { margin-top: 0; font-size: 16px; }
+  #app-view { display: none; flex: 1; }
+  nav.sidebar { width: 220px; background: #fff; border-right: 1px solid #e2e5e0; padding: 14px; }
+  nav.sidebar h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #7a8078; margin: 16px 0 6px; }
+  nav.sidebar .project-item, nav.sidebar .tab-item {
+    padding: 7px 8px; border-radius: 6px; cursor: pointer; margin-bottom: 2px; font-size: 13px;
+  }
+  nav.sidebar .project-item:hover, nav.sidebar .tab-item:hover { background: #eef1ec; }
+  nav.sidebar .active { background: #16332b; color: #fff; }
+  nav.sidebar .active .tag { background: rgba(255,255,255,0.18); color: #fff; }
+  section.content { flex: 1; padding: 20px; overflow-y: auto; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card h3 { margin: 0 0 10px; font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0ec; }
+  th { color: #7a8078; font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .status-pill { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .status-DRAFT { background: #e7e9e4; color: #52564f; }
+  .status-SUBMITTED { background: #fff1cc; color: #8a6300; }
+  .status-VALIDATED { background: #d9f0e1; color: #1c6b41; }
+  .ecart-pos { color: #1c6b41; font-weight: 700; }
+  .ecart-neg { color: #b3261e; font-weight: 700; }
+  .muted { color: #8a8f86; font-size: 12px; }
+  .error-box { background: #fbe4e2; color: #7a1e17; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 12.5px; }
+  .dyn-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .dyn-row > * { flex: 1; }
+  .dyn-row button { flex: 0 0 auto; }
+  .tag { font-size: 10.5px; padding: 1px 6px; border-radius: 4px; background: #eef1ec; margin-left: 4px; }
+  a.link { color: #16332b; }
+</style>
+</head>
+<body>
+
+<header>
+  <div><h1>JDC Digital / Pilotis <span class="badge">CONSOLE DE TEST</span></h1></div>
+  <div class="who" id="who-box" style="display:none;">
+    <span id="who-text"></span>
+    <button class="btn-secondary" id="logout-btn" style="margin-left:10px;">Se déconnecter</button>
+  </div>
+</header>
+
+<div id="login-view">
+  <h2>Connexion (mode dev)</h2>
+  <p class="muted">Comptes de démonstration créés par <code>npm run seed</code>. Sans mot de passe : c'est le mode dev, désactivé si <code>AUTH_MODE≠dev</code>.</p>
+  <div id="login-error"></div>
+  <div class="field">
+    <label>Email</label>
+    <select id="login-email">
+      <option value="admin@jdc-digital.local">admin@jdc-digital.local (Admin)</option>
+      <option value="direction@jdc-digital.local">direction@jdc-digital.local (Direction)</option>
+      <option value="chef.atlas@jdc-digital.local" selected>chef.atlas@jdc-digital.local (Chef Atlas)</option>
+      <option value="chef.oasis@jdc-digital.local">chef.oasis@jdc-digital.local (Chef Oasis)</option>
+      <option value="lecteur@jdc-digital.local">lecteur@jdc-digital.local (Lecteur)</option>
+    </select>
+  </div>
+  <button class="btn-primary" id="login-btn" style="width:100%;">Se connecter</button>
+</div>
+
+<main id="app-view">
+  <nav class="sidebar">
+    <h3>Chantiers</h3>
+    <div id="project-list"></div>
+    <h3>Autres</h3>
+    <div class="tab-item" id="tab-workers">Registre ouvriers</div>
+  </nav>
+  <section class="content" id="content"></section>
+</main>
+
+<script>
+const state = { user: null, projects: [], selectedProjectId: null, view: "logs", dailyLogs: [], selectedLog: null, workers: [] };
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    ...opts,
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  let body = null;
+  try { body = await res.json(); } catch { /* pas de corps JSON (ex: download) */ }
+  if (!res.ok) {
+    const err = new Error((body && body.error) || `Erreur HTTP ${res.status}`);
+    err.status = res.status;
+    err.details = body && body.details;
+    throw err;
+  }
+  return body;
+}
+
+function esc(s) { return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function fmtDate(d) { return new Date(d).toLocaleDateString("fr-FR"); }
+function fmtNum(n, dec = 2) { return n === null || n === undefined ? "—" : Number(n).toFixed(dec); }
+
+// -- Authentification --
+
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const email = document.getElementById("login-email").value;
+  document.getElementById("login-error").innerHTML = "";
+  try {
+    const { user } = await api("/auth/dev/login", { method: "POST", body: JSON.stringify({ email }) });
+    state.user = user;
+    await boot();
+  } catch (e) {
+    document.getElementById("login-error").innerHTML = `<div class="error-box">${esc(e.message)}</div>`;
+  }
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await api("/auth/logout", { method: "POST" }).catch(() => {});
+  location.reload();
+});
+
+document.getElementById("tab-workers").addEventListener("click", () => {
+  state.view = "workers";
+  state.selectedProjectId = null;
+  renderSidebar();
+  renderContent();
+});
+
+async function boot() {
+  try {
+    const me = await api("/auth/me");
+    state.user = me.user;
+  } catch {
+    document.getElementById("login-view").style.display = "block";
+    document.getElementById("app-view").style.display = "none";
+    document.getElementById("who-box").style.display = "none";
+    return;
+  }
+  document.getElementById("login-view").style.display = "none";
+  document.getElementById("app-view").style.display = "flex";
+  document.getElementById("who-box").style.display = "block";
+  document.getElementById("who-text").textContent = `${state.user.displayName} — ${state.user.role}`;
+
+  const { projects } = await api("/api/projects");
+  state.projects = projects;
+  if (projects.length && !state.selectedProjectId) state.selectedProjectId = projects[0].id;
+  state.view = "logs";
+  renderSidebar();
+  await selectProject(state.selectedProjectId);
+}
+
+// -- Sidebar --
+
+function renderSidebar() {
+  const list = document.getElementById("project-list");
+  list.innerHTML = state.projects.map((p) => `
+    <div class="project-item ${state.view === "logs" && state.selectedProjectId === p.id ? "active" : ""}" data-id="${p.id}">
+      ${esc(p.name)} <span class="tag">${esc(p.code)}</span>
+    </div>
+  `).join("") || `<div class="muted">Aucun chantier accessible.</div>`;
+  list.querySelectorAll(".project-item").forEach((el) => {
+    el.addEventListener("click", () => selectProject(el.dataset.id));
+  });
+  document.getElementById("tab-workers").classList.toggle("active", state.view === "workers");
+}
+
+async function selectProject(projectId) {
+  state.view = "logs";
+  state.selectedProjectId = projectId;
+  state.selectedLog = null;
+  renderSidebar();
+  if (!projectId) { renderContent(); return; }
+  const { dailyLogs } = await api(`/api/daily-logs?projectId=${projectId}`);
+  state.dailyLogs = dailyLogs;
+  renderContent();
+}
+
+// -- Contenu principal --
+
+function renderContent() {
+  const el = document.getElementById("content");
+  if (state.view === "workers") { renderWorkersView(el); return; }
+  if (state.selectedLog) { renderLogDetail(el); return; }
+  renderLogsList(el);
+}
+
+function renderLogsList(el) {
+  const project = state.projects.find((p) => p.id === state.selectedProjectId);
+  el.innerHTML = `
+    <div class="card">
+      <h3>Journaux — ${esc(project ? project.name : "")}</h3>
+      <div id="logs-error"></div>
+      <table>
+        <thead><tr><th>Date</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          ${state.dailyLogs.map((l) => `
+            <tr>
+              <td>${fmtDate(l.date)}</td>
+              <td><span class="status-pill status-${l.status}">${l.status}</span></td>
+              <td><button class="btn-secondary" data-open="${l.id}">Ouvrir</button></td>
+            </tr>
+          `).join("") || `<tr><td colspan="3" class="muted">Aucun journal sur la période.</td></tr>`}
+        </tbody>
+      </table>
+      ${canWrite() ? `<div style="margin-top:12px;"><button class="btn-primary" id="new-draft-btn">+ Nouveau brouillon</button></div>` : ""}
+    </div>
+    <div id="new-draft-form"></div>
+  `;
+  el.querySelectorAll("[data-open]").forEach((btn) => btn.addEventListener("click", () => openLog(btn.dataset.open)));
+  const newBtn = document.getElementById("new-draft-btn");
+  if (newBtn) newBtn.addEventListener("click", () => renderNewDraftForm(document.getElementById("new-draft-form")));
+}
+
+function canWrite() { return ["ADMIN", "DIRECTION", "CHEF_CHANTIER"].includes(state.user.role); }
+function canReview() { return ["ADMIN", "DIRECTION"].includes(state.user.role); }
+
+async function openLog(id) {
+  const { dailyLog } = await api(`/api/daily-logs/${id}`);
+  state.selectedLog = dailyLog;
+  renderContent();
+}
+
+function renderLogDetail(el) {
+  const log = state.selectedLog;
+  el.innerHTML = `
+    <button class="btn-secondary" id="back-btn">&larr; Retour à la liste</button>
+    <div id="detail-error" style="margin-top:10px;"></div>
+    <div class="card">
+      <h3>${fmtDate(log.date)} — ${esc(log.project_name)} <span class="status-pill status-${log.status}">${log.status}</span></h3>
+      <p class="muted">Météo : ${esc(log.weather || "—")} · ${log.temp_min ?? "—"}° / ${log.temp_max ?? "—"}° · Responsable : ${esc(log.manager_name || "—")}</p>
+      <p>${esc(log.observations || "")}</p>
+      <div class="row">
+        ${log.status === "DRAFT" && canWrite() ? `<button class="btn-warn" id="submit-btn">Soumettre</button>` : ""}
+        ${log.status === "SUBMITTED" && canReview() ? `<button class="btn-primary" id="validate-btn">Valider</button>` : ""}
+        ${log.status === "SUBMITTED" && canReview() ? `<button class="btn-danger" id="return-btn">Renvoyer</button>` : ""}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Tâches — rendement réel vs référence</h3>
+      <table>
+        <thead><tr><th>Zone / description</th><th>Qté</th><th>Heures</th><th>Rendement réel</th><th>Référence</th><th>Écart</th><th>Ouvriers</th></tr></thead>
+        <tbody>
+          ${log.works.map((w) => `
+            <tr>
+              <td>${esc(w.zone)} — ${esc(w.description)}</td>
+              <td>${fmtNum(w.quantity, 0)} ${esc(w.unit)}</td>
+              <td>${fmtNum(w.totalHours)}</td>
+              <td>${w.rendementReel === null ? "—" : fmtNum(w.rendementReel) + " " + esc(w.unit) + "/h"}</td>
+              <td>${w.reference_rate === null ? '<span class="muted">réf. non saisie</span>' : fmtNum(w.reference_rate) + " " + esc(w.unit) + "/h"}</td>
+              <td>${w.ecartPct === null ? "—" : `<span class="${w.ecartPct >= 0 ? "ecart-pos" : "ecart-neg"}">${w.ecartPct >= 0 ? "+" : ""}${fmtNum(w.ecartPct, 1)}%</span>`}</td>
+              <td>${w.workers.map((wk) => esc(wk.name)).join(", ") || '<span class="muted">aucun</span>'}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="7" class="muted">Aucune tâche.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Pointage nominatif</h3>
+      <table>
+        <thead><tr><th>Ouvrier</th><th>Nature</th><th>Qualification</th><th>Heures</th><th>Heures sup.</th></tr></thead>
+        <tbody>
+          ${log.pointage.map((p) => `
+            <tr>
+              <td>${esc(p.name)} <span class="tag">${esc(p.matricule || "")}</span></td>
+              <td>${p.nature}</td>
+              <td>${esc(p.qualification)}</td>
+              <td>${fmtNum(p.hours, 1)}</td>
+              <td>${p.heuresSup > 0 ? `<strong>${fmtNum(p.heuresSup, 1)}</strong>` : "—"}</td>
+            </tr>
+          `).join("") || `<tr><td colspan="5" class="muted">Aucun pointage.</td></tr>`}
+        </tbody>
+      </table>
+      ${(log.anomalies.modSansTache.length || log.anomalies.tacheSansPointage.length) ? `
+        <p class="muted" style="margin-top:10px;">
+          ${log.anomalies.modSansTache.length ? `⚠ MOD sans tâche : ${log.anomalies.modSansTache.map((p) => esc(p.name)).join(", ")}<br/>` : ""}
+          ${log.anomalies.tacheSansPointage.length ? `⚠ Tâche sans pointage : ${log.anomalies.tacheSansPointage.map((w) => esc(w.description)).join(", ")}` : ""}
+        </p>` : ""}
+    </div>
+
+    <div class="card">
+      <h3>Pièces jointes</h3>
+      <ul>
+        ${log.attachments.map((a) => `
+          <li>${esc(a.file_name)} (${(a.size_bytes / 1024).toFixed(0)} Ko)
+            — <a class="link" href="${a.downloadUrl}" target="_blank">télécharger</a>
+            ${log.status === "DRAFT" && canWrite() ? ` — <a class="link" href="#" data-del-att="${a.id}">supprimer</a>` : ""}
+          </li>
+        `).join("") || `<li class="muted">Aucune pièce jointe.</li>`}
+      </ul>
+      ${log.status === "DRAFT" && canWrite() ? `
+        <form id="attachment-form">
+          <input type="file" name="file" accept="image/jpeg,image/png,image/webp,application/pdf" required />
+          <button class="btn-secondary" type="submit" style="margin-top:8px;">Ajouter la pièce jointe</button>
+        </form>` : ""}
+    </div>
+
+    <div class="card">
+      <h3>Historique des validations</h3>
+      <table>
+        <thead><tr><th>Décision</th><th>Par</th><th>Commentaire</th><th>Date</th></tr></thead>
+        <tbody>
+          ${log.reviews.map((r) => `
+            <tr><td>${r.decision}</td><td>${esc(r.reviewer_name)}</td><td>${esc(r.comment || "—")}</td><td>${fmtDate(r.created_at)}</td></tr>
+          `).join("") || `<tr><td colspan="4" class="muted">Aucune validation pour l'instant.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.getElementById("back-btn").addEventListener("click", () => { state.selectedLog = null; renderContent(); });
+
+  const submitBtn = document.getElementById("submit-btn");
+  if (submitBtn) submitBtn.addEventListener("click", () => doAction(`/api/daily-logs/${log.id}/submit`, { method: "POST" }));
+
+  const validateBtn = document.getElementById("validate-btn");
+  if (validateBtn) validateBtn.addEventListener("click", () => doAction(`/api/daily-logs/${log.id}/review`, { method: "POST", body: JSON.stringify({ decision: "VALIDATED" }) }));
+
+  const returnBtn = document.getElementById("return-btn");
+  if (returnBtn) returnBtn.addEventListener("click", () => {
+    const comment = prompt("Motif du renvoi (obligatoire) :");
+    if (!comment) return;
+    doAction(`/api/daily-logs/${log.id}/review`, { method: "POST", body: JSON.stringify({ decision: "RETURNED", comment }) });
+  });
+
+  el.querySelectorAll("[data-del-att]").forEach((a) => a.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+    if (!confirm("Supprimer cette pièce jointe ?")) return;
+    await doAction(`/api/daily-logs/${log.id}/attachments/${a.dataset.delAtt}`, { method: "DELETE" });
+  }));
+
+  const attForm = document.getElementById("attachment-form");
+  if (attForm) attForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    const file = attForm.querySelector('input[type="file"]').files[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const res = await fetch(`/api/daily-logs/${log.id}/attachments`, { method: "POST", body: fd });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || "Échec de l'upload.");
+      state.selectedLog = body.dailyLog;
+      renderContent();
+    } catch (e) {
+      document.getElementById("detail-error").innerHTML = `<div class="error-box">${esc(e.message)}</div>`;
+    }
+  });
+}
+
+async function doAction(path, opts) {
+  try {
+    const { dailyLog } = await api(path, opts);
+    state.selectedLog = dailyLog;
+    renderContent();
+  } catch (e) {
+    document.getElementById("detail-error").innerHTML = `<div class="error-box">${esc(e.message)}${e.details ? " — " + esc(JSON.stringify(e.details)) : ""}</div>`;
+  }
+}
+
+// -- Nouveau brouillon --
+
+function renderNewDraftForm(el) {
+  const works = [];
+  const attendances = [];
+
+  function renderWorksRows() {
+    return works.map((w, i) => `
+      <div class="dyn-row">
+        <span class="tag">#${i}</span>
+        <span>${esc(w.zone)} — ${esc(w.description)} (${w.quantity} ${esc(w.unit)}${w.referenceRate ? ", réf. " + w.referenceRate : ""})</span>
+        <button type="button" class="btn-secondary" data-rm-work="${i}">Retirer</button>
+      </div>`).join("");
+  }
+  function renderAttRows(workerOptions) {
+    return attendances.map((a, i) => `
+      <div class="dyn-row">
+        <span>${esc((state.workers.find(w => w.id === a.workerId) || {}).last_name || a.workerId)} — ${a.hours}h${a.workIndex !== undefined ? " (tâche #" + a.workIndex + ")" : ""}</span>
+        <button type="button" class="btn-secondary" data-rm-att="${i}">Retirer</button>
+      </div>`).join("");
+  }
+
+  async function ensureWorkers() {
+    if (!state.workers.length) {
+      const { workers } = await api("/api/workers?active=true");
+      state.workers = workers;
+    }
+  }
+
+  ensureWorkers().then(() => {
+    el.innerHTML = `
+      <div class="card">
+        <h3>Nouveau brouillon</h3>
+        <div id="draft-error"></div>
+        <div class="field"><label>Date</label><input type="date" id="draft-date" /></div>
+
+        <h4>Tâches (works)</h4>
+        <div id="works-rows">${renderWorksRows()}</div>
+        <div class="row">
+          <div class="field"><label>Zone</label><input id="w-zone" /></div>
+          <div class="field"><label>Description</label><input id="w-desc" /></div>
+          <div class="field"><label>Quantité</label><input id="w-qty" type="number" step="any" /></div>
+          <div class="field"><label>Unité</label><input id="w-unit" placeholder="m²" /></div>
+          <div class="field"><label>Réf. (unités/h, optionnel)</label><input id="w-ref" type="number" step="any" /></div>
+        </div>
+        <button type="button" class="btn-secondary" id="add-work-btn">+ Ajouter la tâche</button>
+
+        <h4 style="margin-top:16px;">Pointage (attendances)</h4>
+        <div id="att-rows">${renderAttRows()}</div>
+        <div class="row">
+          <div class="field"><label>Ouvrier</label>
+            <select id="a-worker">${state.workers.map((w) => `<option value="${w.id}">${esc(w.last_name)} ${esc(w.first_name)} — ${esc(w.qualification)}</option>`).join("")}</select>
+          </div>
+          <div class="field"><label>Heures</label><input id="a-hours" type="number" step="any" value="8" /></div>
+          <div class="field"><label>Tâche (index, optionnel)</label><input id="a-workindex" type="number" min="0" placeholder="ex: 0" /></div>
+        </div>
+        <button type="button" class="btn-secondary" id="add-att-btn">+ Ajouter le pointage</button>
+
+        <div style="margin-top:16px;">
+          <button class="btn-primary" id="create-draft-btn">Créer le brouillon</button>
+          <button class="btn-secondary" id="cancel-draft-btn">Annuler</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById("add-work-btn").addEventListener("click", () => {
+      const zone = document.getElementById("w-zone").value.trim();
+      const description = document.getElementById("w-desc").value.trim();
+      const quantity = Number(document.getElementById("w-qty").value);
+      const unit = document.getElementById("w-unit").value.trim();
+      const refVal = document.getElementById("w-ref").value;
+      if (!zone || !description || !unit || !Number.isFinite(quantity)) { alert("Zone, description, quantité et unité sont requis."); return; }
+      works.push({ zone, description, quantity, unit, progressPct: 0, ...(refVal ? { referenceRate: Number(refVal) } : {}) });
+      document.getElementById("works-rows").innerHTML = renderWorksRows();
+      document.getElementById("works-rows").querySelectorAll("[data-rm-work]").forEach((b) => b.addEventListener("click", () => { works.splice(Number(b.dataset.rmWork), 1); document.getElementById("works-rows").innerHTML = renderWorksRows(); wireRemoveWorks(); }));
+    });
+    function wireRemoveWorks() {
+      document.getElementById("works-rows").querySelectorAll("[data-rm-work]").forEach((b) => b.addEventListener("click", () => { works.splice(Number(b.dataset.rmWork), 1); document.getElementById("works-rows").innerHTML = renderWorksRows(); wireRemoveWorks(); }));
+    }
+
+    document.getElementById("add-att-btn").addEventListener("click", () => {
+      const workerId = document.getElementById("a-worker").value;
+      const hours = Number(document.getElementById("a-hours").value);
+      const wiRaw = document.getElementById("a-workindex").value;
+      if (!workerId || !Number.isFinite(hours)) { alert("Ouvrier et heures sont requis."); return; }
+      attendances.push({ workerId, hours, ...(wiRaw !== "" ? { workIndex: Number(wiRaw) } : {}) });
+      document.getElementById("att-rows").innerHTML = renderAttRows();
+      wireRemoveAtt();
+    });
+    function wireRemoveAtt() {
+      document.getElementById("att-rows").querySelectorAll("[data-rm-att]").forEach((b) => b.addEventListener("click", () => { attendances.splice(Number(b.dataset.rmAtt), 1); document.getElementById("att-rows").innerHTML = renderAttRows(); wireRemoveAtt(); }));
+    }
+
+    document.getElementById("cancel-draft-btn").addEventListener("click", () => renderContent());
+
+    document.getElementById("create-draft-btn").addEventListener("click", async () => {
+      const date = document.getElementById("draft-date").value;
+      if (!date) { alert("Choisis une date."); return; }
+      try {
+        const { dailyLog } = await api("/api/daily-logs", {
+          method: "POST",
+          body: JSON.stringify({ projectId: state.selectedProjectId, date, teams: [], works, incidents: [], attendances }),
+        });
+        await selectProject(state.selectedProjectId);
+        state.selectedLog = dailyLog;
+        renderContent();
+      } catch (e) {
+        document.getElementById("draft-error").innerHTML = `<div class="error-box">${esc(e.message)}${e.details ? " — " + esc(JSON.stringify(e.details)) : ""}</div>`;
+      }
+    });
+  });
+}
+
+// -- Registre ouvriers --
+
+async function renderWorkersView(el) {
+  const { workers } = await api("/api/workers");
+  state.workers = workers;
+  const canManage = ["ADMIN", "DIRECTION"].includes(state.user.role);
+  el.innerHTML = `
+    <div class="card">
+      <h3>Registre des ouvriers</h3>
+      <div id="workers-error"></div>
+      <table>
+        <thead><tr><th>Matricule</th><th>Nom</th><th>Nature</th><th>Qualification</th><th>Actif</th></tr></thead>
+        <tbody>
+          ${workers.map((w) => `
+            <tr>
+              <td>${esc(w.matricule || "—")}</td>
+              <td>${esc(w.last_name)} ${esc(w.first_name)}</td>
+              <td>${w.nature}</td>
+              <td>${esc(w.qualification)}</td>
+              <td>${w.active ? "Oui" : "Non"}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    ${canManage ? `
+    <div class="card">
+      <h3>Ajouter un ouvrier</h3>
+      <div class="row">
+        <div class="field"><label>Prénom</label><input id="nw-first" /></div>
+        <div class="field"><label>Nom</label><input id="nw-last" /></div>
+        <div class="field"><label>Qualification</label><input id="nw-qual" placeholder="ex: Coffreur, Chef d'équipe..." /></div>
+        <div class="field"><label>Matricule (optionnel)</label><input id="nw-matricule" /></div>
+      </div>
+      <button class="btn-primary" id="add-worker-btn">Ajouter</button>
+      <p class="muted">La nature (MOD/MOID) est déduite automatiquement de la qualification si non précisée.</p>
+    </div>` : ""}
+  `;
+  const addBtn = document.getElementById("add-worker-btn");
+  if (addBtn) addBtn.addEventListener("click", async () => {
+    const firstName = document.getElementById("nw-first").value.trim();
+    const lastName = document.getElementById("nw-last").value.trim();
+    const qualification = document.getElementById("nw-qual").value.trim();
+    const matricule = document.getElementById("nw-matricule").value.trim();
+    try {
+      await api("/api/workers", { method: "POST", body: JSON.stringify({ firstName, lastName, qualification, ...(matricule ? { matricule } : {}) }) });
+      renderWorkersView(el);
+    } catch (e) {
+      document.getElementById("workers-error").innerHTML = `<div class="error-box">${esc(e.message)}</div>`;
+    }
+  });
+}
+
+boot();
+</script>
+</body>
+</html>
